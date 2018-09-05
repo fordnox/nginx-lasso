@@ -8,4 +8,4 @@ services:
   reverseproxy:
     build: ./nginx/.
   lasso:
-    build: ./lasso/.
+    build: ./lasso-local/.
