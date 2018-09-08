@@ -1,11 +1,16 @@
 version: '3'
 
 services:
-  haproxy:
-    build: ./haproxy/.
+  proxy:
+    build: ./nginx
+    environment:
+      - AUTH_BACKEND=http://localhost:9090
+      - BACKEND=https://labs.wework.com
     ports:
-      - '8080:8080'
-  reverseproxy:
-    build: ./nginx/.
-  lasso:
-    build: ./lasso/.
+      - "80:80"
+
+  auth:
+    build: ./lasso
+    ports:
+      - "9090:9090"
+

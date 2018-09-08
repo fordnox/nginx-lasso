@@ -88,7 +88,7 @@ oauth:
     - openid
     - email
     - profile
-  callback_url: http://lasso.weworklabs.com:9090/auth
+  callback_url: http://localhost:9090/auth
 
   # # IndieAuth
   # # https://indielogin.com/api
