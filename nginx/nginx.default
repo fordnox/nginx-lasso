@@ -11,13 +11,13 @@ server {
   root  /usr/local/nginx/html;
   index  index.html index.htm;
 
-  # send all requests to the `/auth` endpoint for authorization
-  auth_request /auth;
+  # send all requests to the `/validate` endpoint for authorization
+  auth_request /validate;
 
   # if validate returns `401 not authorized` then forward the request to the error401block
   error_page 401 = @error401;
 
-  location = /auth {
+  location = /validate {
     # lasso can run behind the same nginx-revproxy
     # May need to add "internal", and comply to "upstream" server naming
     internal;
@@ -43,30 +43,10 @@ server {
 
   # proxy pass authorized requests to your service
   location / {
-    # proxy_pass http://dev.yourdomain.com:8080;
+    proxy_pass https://labs.wework.com;
     # set user header (usually an email)
     proxy_set_header X-Lasso-User $auth_resp_x_lasso_user;
   }
-
-  # location = /auth {
-  #   proxy_pass {{auth_backend}};
-  #   proxy_pass_request_body off;
-  #   proxy_set_header Content-Length "";
-  #   proxy_set_header X-Original-URI $request_uri;
-  #   proxy_set_header X-Docker-Token "";
-  # }
-
-  # location / {
-  #   proxy_pass {{backend}};
-  #   auth_request /auth;
-  #   proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;
-  #   proxy_buffering off;
-  # }
-
-  # location /_ping {
-  #   auth_basic off;
-  #   proxy_pass {{backend}};
-  # }
 }
 
 server {
