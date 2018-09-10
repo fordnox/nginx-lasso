@@ -1,6 +1,6 @@
 server {
   listen 80;
-  server_name localhost.local;
+  server_name _;
 
   client_max_body_size 0;                  # disable any limits to avoid HTTP 413 for large image uploads
   chunked_transfer_encoding on;            # required to avoid HTTP 411: see Issue #1486 (https://github.com/dotcloud/docker/issues/1486)
@@ -21,7 +21,7 @@ server {
     # lasso can run behind the same nginx-revproxy
     # May need to add "internal", and comply to "upstream" server naming
     internal;
-    proxy_pass http://id.localhost.local;
+    proxy_pass http://auth:9090;
 
     # lasso only acts on the request headers
     proxy_pass_request_body off;
@@ -38,22 +38,22 @@ server {
 
   location @error401 {
     # redirect to lasso for login
-    return 302 http://id.localhost.local/login?url=$scheme://$http_host$request_uri&lasso-failcount=$auth_resp_failcount&X-Lasso-Token=$auth_resp_jwt&error=$auth_resp_err;
+    return 302 http://localhost:9090/login?url=$scheme://$http_host$request_uri&lasso-failcount=$auth_resp_failcount&X-Lasso-Token=$auth_resp_jwt&error=$auth_resp_err;
   }
 
   # proxy pass authorized requests to your service
   location / {
-    proxy_pass https://labs.wework.com;
+    # proxy_pass http://dev.yourdomain.com:8080;
     # set user header (usually an email)
     proxy_set_header X-Lasso-User $auth_resp_x_lasso_user;
   }
 }
 
-server {
-  listen 80;
-  server_name id.localhost.local;
-  location / {
-    proxy_set_header Host id.localhost.local;
-    proxy_pass http://auth:9090;
-  }
-}
+# server {
+#   listen 80;
+#   server_name id.localhost.local;
+#   location / {
+#     proxy_set_header Host id.localhost.local;
+#     proxy_pass http://auth:9090;
+#   }
+# }
