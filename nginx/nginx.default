@@ -1,24 +1,27 @@
 server {
   listen 80;
-  server_name _;
+  server_name localhost.local;
 
   client_max_body_size 0;                  # disable any limits to avoid HTTP 413 for large image uploads
   chunked_transfer_encoding on;            # required to avoid HTTP 411: see Issue #1486 (https://github.com/dotcloud/docker/issues/1486)
+
   proxy_set_header Host      $http_host;   # required for docker client's sake
   proxy_set_header X-Real-IP $remote_addr; # pass on real client's IP
 
   root  /usr/local/nginx/html;
   index  index.html index.htm;
 
-  # send all requests to the `/validate` endpoint for authorization
-  auth_request /validate;
+  # send all requests to the `/auth` endpoint for authorization
+  auth_request /auth;
+
   # if validate returns `401 not authorized` then forward the request to the error401block
   error_page 401 = @error401;
 
-  location = /validate {
+  location = /auth {
     # lasso can run behind the same nginx-revproxy
     # May need to add "internal", and comply to "upstream" server naming
-    proxy_pass http://localhost:9090;
+    internal;
+    proxy_pass http://id.localhost.local;
 
     # lasso only acts on the request headers
     proxy_pass_request_body off;
@@ -35,7 +38,7 @@ server {
 
   location @error401 {
     # redirect to lasso for login
-    return 302 http://localhost:9090/login?url=$scheme://$http_host$request_uri&lasso-failcount=$auth_resp_failcount&X-Lasso-Token=$auth_resp_jwt&error=$auth_resp_err;
+    return 302 http://id.localhost.local/login?url=$scheme://$http_host$request_uri&lasso-failcount=$auth_resp_failcount&X-Lasso-Token=$auth_resp_jwt&error=$auth_resp_err;
   }
 
   # proxy pass authorized requests to your service
@@ -66,11 +69,11 @@ server {
   # }
 }
 
-# server {
-#   listen 80 default_server;
-#   server_name lasso.yourdomain.com;
-#   location / {
-#     proxy_set_header Host lasso.yourdomain.com;
-#     proxy_pass http://127.0.0.1:9090;
-#   }
-# }
+server {
+  listen 80;
+  server_name id.localhost.local;
+  location / {
+    proxy_set_header Host id.localhost.local;
+    proxy_pass http://auth:9090;
+  }
+}
